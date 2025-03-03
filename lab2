@@ -1,0 +1,90 @@
+import requests
+import json
+from bs4 import BeautifulSoup
+
+robots_url = 'https://webscraper.io/robots.txt'
+robots_response = requests.get(robots_url)
+if robots_response.status_code == 200:
+  print("robots.txt contents \n",robots_response.text[:5000])
+else:
+  print("Failed to obtain the txt")
+
+
+response =  requests.get('https://webscraper.io/test-sites/e-commerce/allinone/computers/laptops')
+print(response.status_code)
+
+print(response.url)
+print(response.json)
+print(response)
+print(response.text)
+print(response.headers)
+print(response.request.headers)
+
+soup=BeautifulSoup(response.content,"html.parser")
+
+print(soup)
+print(soup.prettify)
+print(soup.title)
+print(soup.title.get_text())
+
+price=soup.find("h4",{"class":"price float-end card-title pull-right"})
+print(price)
+
+content=str(price)
+print(content)
+
+print(price.get_text)
+
+allprices=soup.findAll("h4",{"class":"price float-end card-title pull-right"})
+print(allprices)
+
+for price in allprices:
+  print(price.get_text())
+
+items=soup.findAll("a",{"class":"title"})
+print(items)
+
+count = 0
+for item in items:
+  print(item.get_text())
+  count=count+1
+print(count)
+
+import requests
+
+try:
+    response = requests.get('https://webscraper.io/test-sites/e-commerce/allinone/computers/laptops', timeout=5)
+    response.raise_for_status()
+    print("Request successful:", response.status_code)
+except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError, 
+        requests.exceptions.Timeout, requests.exceptions.RequestException) as err:
+    print(f"Error occurred: {err}")
+
+
+import csv
+base_url = 'https://webscraper.io/test-sites/e-commerce/static/computers/laptops?page='
+all_products = []
+
+for page in range(1, 20):  # Adjust range as needed
+    response = requests.get(base_url + str(page))
+    if response.status_code != 200:
+        print(f"Failed to scrape page {page}")
+        continue
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    products = soup.select('.title')  # Select by class
+    prices = soup.select('.price')  # Select by class
+
+    all_products.extend({"product": p.text.strip(), "price": pr.text.strip()} for p, pr in zip(products, prices))
+    print(f"Scraped page {page} successfully.")
+
+# Save to JSON
+with open('scraped_products.json', 'w') as json_file:
+    json.dump(all_products, json_file, indent=4)
+
+# Save to CSV
+with open('scraped_products.csv', 'w', newline='', encoding='utf-8') as csv_file:
+    writer = csv.DictWriter(csv_file, fieldnames=["product", "price"])
+    writer.writeheader()
+    writer.writerows(all_products)
+print("Data saved in JSON and CSV!")
